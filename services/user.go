@@ -18,7 +18,7 @@ func (*UserService) AddUser(ctx context.Context, req *pb.UserRequest) (*pb.UserR
 
 	return &pb.UserResponse{
 		Id:       "someBigAndUniqueId",
-		FullName: req.GetFirstName() + "" + req.GetLastName(),
+		FullName: req.GetFirstName() + " " + req.GetLastName(),
 		Email:    req.GetEmail(),
 	}, nil
 
