@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	AddUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	AddUserWithResponseStream(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (UserService_AddUserWithResponseStreamClient, error)
 }
 
 type userServiceClient struct {
@@ -38,11 +39,44 @@ func (c *userServiceClient) AddUser(ctx context.Context, in *UserRequest, opts .
 	return out, nil
 }
 
+func (c *userServiceClient) AddUserWithResponseStream(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (UserService_AddUserWithResponseStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[0], "/pb.UserService/AddUserWithResponseStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &userServiceAddUserWithResponseStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type UserService_AddUserWithResponseStreamClient interface {
+	Recv() (*UserResponseStream, error)
+	grpc.ClientStream
+}
+
+type userServiceAddUserWithResponseStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *userServiceAddUserWithResponseStreamClient) Recv() (*UserResponseStream, error) {
+	m := new(UserResponseStream)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	AddUser(context.Context, *UserRequest) (*UserResponse, error)
+	AddUserWithResponseStream(*UserRequest, UserService_AddUserWithResponseStreamServer) error
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -52,6 +86,9 @@ type UnimplementedUserServiceServer struct {
 
 func (UnimplementedUserServiceServer) AddUser(context.Context, *UserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUser not implemented")
+}
+func (UnimplementedUserServiceServer) AddUserWithResponseStream(*UserRequest, UserService_AddUserWithResponseStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddUserWithResponseStream not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -84,6 +121,27 @@ func _UserService_AddUser_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_AddUserWithResponseStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(UserRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(UserServiceServer).AddUserWithResponseStream(m, &userServiceAddUserWithResponseStreamServer{stream})
+}
+
+type UserService_AddUserWithResponseStreamServer interface {
+	Send(*UserResponseStream) error
+	grpc.ServerStream
+}
+
+type userServiceAddUserWithResponseStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *userServiceAddUserWithResponseStreamServer) Send(m *UserResponseStream) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -96,6 +154,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_AddUser_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "AddUserWithResponseStream",
+			Handler:       _UserService_AddUserWithResponseStream_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "user.proto",
 }

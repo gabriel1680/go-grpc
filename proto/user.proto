@@ -16,6 +16,12 @@ message UserResponse {
   string email = 3;
 }
 
+message UserResponseStream {
+  string status = 1;
+  UserResponse user = 2;
+}
+
 service UserService {
   rpc AddUser (UserRequest) returns (UserResponse);
+  rpc AddUserWithResponseStream (UserRequest) returns (stream UserResponseStream);
 }
