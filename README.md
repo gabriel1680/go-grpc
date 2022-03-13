@@ -1,4 +1,4 @@
-# Go-gRPC
+# Description
 
 This project apply the concepts of gRPC with Protocol Buffers communication with the following strategies:
 
