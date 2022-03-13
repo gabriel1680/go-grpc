@@ -21,7 +21,16 @@ message UserResponseStream {
   UserResponse user = 2;
 }
 
+message UserRequestStream {
+  repeated UserRequest user = 1;
+}
+
+message MultiUserResponse {
+  repeated UserResponse users = 1;
+}
+
 service UserService {
   rpc AddUser (UserRequest) returns (UserResponse);
   rpc AddUserWithResponseStream (UserRequest) returns (stream UserResponseStream);
+  rpc AddUsersWithRequestStream (stream UserRequest) returns (MultiUserResponse);
 }

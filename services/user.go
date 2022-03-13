@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"time"
 
 	"github.com/gabriel1680/go-grpc/pb"
@@ -50,4 +52,29 @@ func (*UserService) AddUserWithResponseStream(req *pb.UserRequest, stream pb.Use
 	})
 
 	return nil
+}
+
+func (*UserService) AddUsersWithRequestStream(stream pb.UserService_AddUsersWithRequestStreamServer) error {
+	users := []*pb.UserResponse{}
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&pb.MultiUserResponse{
+				Users: users,
+			})
+		}
+
+		if err != nil {
+			log.Fatalf("Error on receiving stream request: %v", err)
+		}
+
+		users = append(users, &pb.UserResponse{
+			Id:       "1234",
+			FullName: req.GetFirstName() + " " + req.GetLastName(),
+			Email:    req.GetEmail(),
+		})
+
+		fmt.Println("Receiving", req.GetEmail())
+	}
 }
