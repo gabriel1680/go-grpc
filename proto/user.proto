@@ -33,4 +33,5 @@ service UserService {
   rpc AddUser (UserRequest) returns (UserResponse);
   rpc AddUserWithResponseStream (UserRequest) returns (stream UserResponseStream);
   rpc AddUsersWithRequestStream (stream UserRequest) returns (MultiUserResponse);
+  rpc AddUsersWithBidirectionalStream (stream UserRequest) returns (stream UserResponseStream);
 }

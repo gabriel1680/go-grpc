@@ -38,11 +38,9 @@ func CreateRequest(client pb.UserServiceClient) {
 		if err == io.EOF {
 			break
 		}
-
 		if err != nil {
 			log.Fatalf("Could not receive the stream message from server: %v", err)
 		}
-
 		fmt.Println(stream)
 	}
 

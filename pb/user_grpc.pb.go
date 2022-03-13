@@ -25,6 +25,7 @@ type UserServiceClient interface {
 	AddUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	AddUserWithResponseStream(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (UserService_AddUserWithResponseStreamClient, error)
 	AddUsersWithRequestStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddUsersWithRequestStreamClient, error)
+	AddUsersWithBidirectionalStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddUsersWithBidirectionalStreamClient, error)
 }
 
 type userServiceClient struct {
@@ -110,6 +111,37 @@ func (x *userServiceAddUsersWithRequestStreamClient) CloseAndRecv() (*MultiUserR
 	return m, nil
 }
 
+func (c *userServiceClient) AddUsersWithBidirectionalStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddUsersWithBidirectionalStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[2], "/pb.UserService/AddUsersWithBidirectionalStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &userServiceAddUsersWithBidirectionalStreamClient{stream}
+	return x, nil
+}
+
+type UserService_AddUsersWithBidirectionalStreamClient interface {
+	Send(*UserRequest) error
+	Recv() (*UserResponseStream, error)
+	grpc.ClientStream
+}
+
+type userServiceAddUsersWithBidirectionalStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *userServiceAddUsersWithBidirectionalStreamClient) Send(m *UserRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *userServiceAddUsersWithBidirectionalStreamClient) Recv() (*UserResponseStream, error) {
+	m := new(UserResponseStream)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type UserServiceServer interface {
 	AddUser(context.Context, *UserRequest) (*UserResponse, error)
 	AddUserWithResponseStream(*UserRequest, UserService_AddUserWithResponseStreamServer) error
 	AddUsersWithRequestStream(UserService_AddUsersWithRequestStreamServer) error
+	AddUsersWithBidirectionalStream(UserService_AddUsersWithBidirectionalStreamServer) error
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedUserServiceServer) AddUserWithResponseStream(*UserRequest, Us
 }
 func (UnimplementedUserServiceServer) AddUsersWithRequestStream(UserService_AddUsersWithRequestStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddUsersWithRequestStream not implemented")
+}
+func (UnimplementedUserServiceServer) AddUsersWithBidirectionalStream(UserService_AddUsersWithBidirectionalStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddUsersWithBidirectionalStream not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -211,6 +247,32 @@ func (x *userServiceAddUsersWithRequestStreamServer) Recv() (*UserRequest, error
 	return m, nil
 }
 
+func _UserService_AddUsersWithBidirectionalStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(UserServiceServer).AddUsersWithBidirectionalStream(&userServiceAddUsersWithBidirectionalStreamServer{stream})
+}
+
+type UserService_AddUsersWithBidirectionalStreamServer interface {
+	Send(*UserResponseStream) error
+	Recv() (*UserRequest, error)
+	grpc.ServerStream
+}
+
+type userServiceAddUsersWithBidirectionalStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *userServiceAddUsersWithBidirectionalStreamServer) Send(m *UserResponseStream) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *userServiceAddUsersWithBidirectionalStreamServer) Recv() (*UserRequest, error) {
+	m := new(UserRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +294,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AddUsersWithRequestStream",
 			Handler:       _UserService_AddUsersWithRequestStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "AddUsersWithBidirectionalStream",
+			Handler:       _UserService_AddUsersWithBidirectionalStream_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

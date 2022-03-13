@@ -78,3 +78,29 @@ func (*UserService) AddUsersWithRequestStream(stream pb.UserService_AddUsersWith
 		fmt.Println("Receiving", req.GetEmail())
 	}
 }
+
+func (*UserService) AddUsersWithBidirectionalStream(
+	stream pb.UserService_AddUsersWithBidirectionalStreamServer,
+) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error on receiving stream request: %v", err)
+		}
+
+		err = stream.Send(&pb.UserResponseStream{
+			Status: "Completed",
+			User: &pb.UserResponse{
+				Id:       "1234",
+				FullName: req.GetFirstName() + " " + req.GetLastName(),
+				Email:    req.GetEmail(),
+			},
+		})
+		if err != nil {
+			log.Fatalf("Could not send stream to the client: %v", err)
+		}
+	}
+}
